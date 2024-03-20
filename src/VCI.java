@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 
@@ -10,10 +11,22 @@ public class VCI {
         String archivoSalida = "C:\\Users\\Asus TUF\\OneDrive - Tecnologico Nacional de Mexico Campus Saltillo\\6 Semestre\\automatas 2\\VCI\\src\\VCI.txt";
         List<String> vci = new ArrayList<>();
         Stack<Operador> operaciones = new Stack<Operador>();
+        HashMap<String, Integer> operador = new HashMap<>();
+        operador.put("*", 60);
+        operador.put("/", 60);
+        operador.put("+", 50);
+        operador.put("-", 50);
+        operador.put("<", 40);
+        operador.put(">", 40);
+        operador.put("==", 40);
+        operador.put("!", 30);
+        operador.put("&&", 20);
+        operador.put("||", 10);
+        operador.put("=", 0);
+
         try (BufferedReader br = new BufferedReader(new FileReader(archivoEntrada));
         BufferedWriter bw = new BufferedWriter(new FileWriter(archivoSalida))){
 
-            String valor = null;
             // linea almacena la linea leida del archivo
             String linea;
             // en este ciclo lo que se hace es separar en 4 partes la cadena de entrada
@@ -27,12 +40,32 @@ public class VCI {
 
                 // aqui se escribe en el archivo de salida al hacer la comparativa de si no es una palabra reservada
                 // y no es numero
-                if (!esPalabraReservada(primeraParte) && !esNumero(primeraParte)) {
-                    bw.write(primeraParte + ",");
-                    bw.write(segundaParte + ",");
-                    bw.write(valor + ",");
-                    bw.write("Main\n");
+                if(primeraParte.equals(";")){
+                    while (!operaciones.isEmpty()){
+                        bw.write(operaciones.pop().getToken()+"\n");
+                    }
+                }else if (!esPalabraReservada(primeraParte)) {
+                    bw.write(primeraParte + ", " +segundaParte + ", " + terceraParte + ", " +cuartaParte +"\n" );
+                }else if(esPalabraReservada(primeraParte)){
+                    if(primeraParte.equals("(")){
+                        operaciones.push(new Operador("(",0,primeraParte+","+segundaParte+","+terceraParte+","+cuartaParte));
+                    }else if(primeraParte.equals("=")){
+                        operaciones.push(new Operador("=",0,primeraParte+","+segundaParte+","+terceraParte+","+cuartaParte));
+                    } else if (primeraParte.equals(")")) {
+                        while (!operaciones.peek().equals("(")){
+                            bw.write(operaciones.pop().getToken() +"\n");
+                        }
+                        operaciones.pop();
+                    }else{
+                     if(operador.get(primeraParte) > operaciones.peek().getValor()){
+                         operaciones.push(new Operador(primeraParte,operador.get(primeraParte),primeraParte+","+segundaParte+","+terceraParte+","+cuartaParte));
+                     } else if (operador.get(primeraParte)<= operaciones.peek().getValor()) {
+                         bw.write(operaciones.pop().getToken()+"\n");
+                         operaciones.push(new Operador(primeraParte,operador.get(primeraParte),primeraParte+","+segundaParte+","+terceraParte+","+cuartaParte));
+                     }
+                    }
                 }
+
             }
 
             System.out.println("Procesamiento completado. Se ha generado el archivo: " + archivoSalida);
@@ -51,7 +84,7 @@ public class VCI {
                 "mientras", "repetir", "hasta", "entero", "real", "string", "cadena",
                 "Logico", "logico", "Variables", "variables", "Entonces", "entonces",
                 "Hacer", "hacer", "*", "/", "%", "+", "-", "=", "<", "<=",
-                ">", ">=", "==", "!=", "&&", "||", "!", "(", ")", ";", ",",
+                ">", ">=", "==", "!=", "and", "or", "!", "(", ")", ";", ",",
                 "true", "false"};
         for (String palabraReservada : palabrasReservadas) {
             if (palabra.equals(palabraReservada)) {
